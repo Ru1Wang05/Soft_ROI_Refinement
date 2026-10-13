@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the following paper."
+title: "Soft ROI Refinement for Small-Structure Segmentation in Fetal Cardiac Ultrasound"
+authors:
+  - family-names: Wang
+    given-names: Rui
+    affiliation: "Xi'an Jiaotong-Liverpool University"
+  - family-names: Fazi
+    given-names: Camilla
+    affiliation: "University of Florence"
+  - family-names: Hernandez-Cruz
+    given-names: Netzahualcoyotl
+    affiliation: "Xi'an Jiaotong-Liverpool University"
+# TODO: add doi and fill conference-details when the IECBES 2026 record is available.
+type: proceedings
+keywords:
+  - fetal echocardiography
+  - medical image segmentation
+  - TransUNet
+  - ultrasound
+version: 1.0.0
+date-released: "2026-10-14"
+license: Apache-2.0
+repository-code: "https://github.com/Ru1Wang05/Soft_ROI_Refinement"

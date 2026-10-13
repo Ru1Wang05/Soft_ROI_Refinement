@@ -25,6 +25,8 @@ paper_results/
 # Data and checkpoints (configure local paths, never commit)
 data/
 lists/
+pretrained/
+configs/paths.sh
 *.npz
 *.pth
 *.nii.gz
