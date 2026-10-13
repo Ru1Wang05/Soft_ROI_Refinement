@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Experiment outputs
+logs*/
+optimization_runs/
+seed_extension_results/
+baselines_results/
+final_test_results/
+final_boundary_results/
+final_comparison_outputs/
+raw_test_results/
+raw_boundary_results/
+factor_test_results/
+factor_boundary_results/
+confusion_matrices/
+paper_results/
+*.log
+
+# Data and checkpoints (configure local paths, never commit)
+data/
+lists/
+*.npz
+*.pth
+*.nii.gz
+
+# OS
+.DS_Store
+Thumbs.db
