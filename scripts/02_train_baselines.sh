@@ -35,8 +35,9 @@ for ARCH in "${ARCHS[@]}"; do
 
     echo "START arch=$ARCH seed=$SEED run=$RUN"
     TRAIN_ARGS=(
+      --model "$ARCH"
       --root_path "$DATA_ROOT" --list_dir "$LIST_DIR"
-      --snapshot_path "$CKPT_DIR" --arch "$ARCH"
+      --snapshot_path "$CKPT_DIR"
       --num_classes 12 --img_size 384 --batch_size 4 --max_epochs 70
       --base_lr 0.01 --seed "$SEED" --loss_mode dice_ce
       --sampling uniform --augmentation legacy --val_every 2
@@ -47,16 +48,16 @@ for ARCH in "${ARCHS[@]}"; do
       TRAIN_ARGS+=(--swin_pretrained "$SWIN_PRETRAINED")
     fi
 
-    "$PYTHON_BIN" train_fetalheart_baselines.py "${TRAIN_ARGS[@]}"
+    "$PYTHON_BIN" train.py "${TRAIN_ARGS[@]}"
     test -f "$CHECKPOINT" || { echo "missing checkpoint: $CHECKPOINT" >&2; exit 4; }
 
-    "$PYTHON_BIN" evaluate_fetalheart_final_models.py \
+    "$PYTHON_BIN" evaluate.py \
       --root_path "$DATA_ROOT" --list_dir "$LIST_DIR" \
       --checkpoint "$CHECKPOINT" --output "$TEST_JSON" \
       --model_type "baseline_${ARCH}" --split test --img_size 384 \
       --num_classes 12
 
-    "$PYTHON_BIN" eval_boundary_search.py \
+    "$PYTHON_BIN" evaluate_boundary.py \
       --checkpoint "$CHECKPOINT" --output_dir "$BOUNDARY_DIR" --run_name "$RUN" \
       --data_dir "$DATA_ROOT" --list_dir "$LIST_DIR" --split test \
       --num_classes 12 --img_size 384 --seed "$SEED" \

@@ -33,16 +33,18 @@ for SEED in "${SEEDS[@]}"; do
   case "$STAGE" in
     raw)
       RUN="official_raw_224_legacy_nopretrain_seed${SEED}"; IMG=224; MODEL_TYPE=original
-      TRAIN=("$PYTHON_BIN" train_fetalheart_raw.py
+      TRAIN=("$PYTHON_BIN" train.py --model transunet
         --root_path "$DATA_ROOT" --list_dir "$LIST_DIR"
         --snapshot_path "optimization_runs/${RUN}"
         --num_classes 12 --max_epochs 50 --batch_size 8 --base_lr 0.01
         --img_size 224 --seed "$SEED" --n_skip 3 --vit_name R50-ViT-B_16
-        --vit_patches_size 16 --num_workers 4 --amp)
+        --vit_patches_size 16 --loss_mode legacy_dice_ce
+        --sampling uniform --augmentation legacy --val_every 2
+        --num_workers 4 --amp)
       ;;
     corrected)
       RUN="factor_corrected_nopretrain_224_seed${SEED}"; IMG=224; MODEL_TYPE=original
-      TRAIN=("$PYTHON_BIN" train_fetalheart_factorial.py
+      TRAIN=("$PYTHON_BIN" train.py --model transunet
         --root_path "$DATA_ROOT" --list_dir "$LIST_DIR"
         --snapshot_path "optimization_runs/${RUN}" --loss_mode dice_ce
         --num_classes 12 --max_epochs 50 --batch_size 8 --base_lr 0.01
@@ -51,7 +53,7 @@ for SEED in "${SEEDS[@]}"; do
       ;;
     pretrain)
       RUN="factor_legacy_pretrain_224_seed${SEED}"; IMG=224; MODEL_TYPE=original
-      TRAIN=("$PYTHON_BIN" train_fetalheart_factorial.py
+      TRAIN=("$PYTHON_BIN" train.py --model transunet
         --root_path "$DATA_ROOT" --list_dir "$LIST_DIR"
         --snapshot_path "optimization_runs/${RUN}" --loss_mode legacy_dice_ce
         --pretrained_path "$PRETRAINED"
@@ -61,7 +63,7 @@ for SEED in "${SEEDS[@]}"; do
       ;;
     adjusted)
       RUN="dicefix_384_ep70_seed${SEED}"; IMG=384; MODEL_TYPE=original
-      TRAIN=("$PYTHON_BIN" train_fetalheart_opt.py
+      TRAIN=("$PYTHON_BIN" train.py --model transunet
         --root_path "$DATA_ROOT" --list_dir "$LIST_DIR"
         --snapshot_path "optimization_runs/${RUN}" --pretrained_path "$PRETRAINED"
         --num_classes 12 --img_size 384 --batch_size 4 --max_epochs 70
@@ -71,7 +73,7 @@ for SEED in "${SEEDS[@]}"; do
       ;;
     roi)
       RUN="roi_refiner_384_ep70_seed${SEED}"; IMG=384; MODEL_TYPE=roi_refiner
-      TRAIN=("$PYTHON_BIN" train_fetalheart_roi_refiner.py
+      TRAIN=("$PYTHON_BIN" train.py --model roi_refiner
         --root_path "$DATA_ROOT" --list_dir "$LIST_DIR"
         --snapshot_path "optimization_runs/${RUN}" --pretrained_path "$PRETRAINED"
         --num_classes 12 --img_size 384 --batch_size 4 --max_epochs 70
@@ -85,26 +87,19 @@ for SEED in "${SEEDS[@]}"; do
   CHECKPOINT="optimization_runs/${RUN}/best_dice.pth"
   test ! -e "optimization_runs/${RUN}" || { echo "refusing to overwrite optimization_runs/${RUN}" >&2; exit 3; }
 
-  # Results layout expected by summarize_aish_5seed_statistics.py: extension
-  # seeds live under seed_extension_results/, the three original seeds under
-  # the per-stage result dirs with their table-level names.
+  # Results layout expected by summarize.py (main table): extension seeds live
+  # under seed_extension_results/, the three original seeds under the per-stage
+  # result dirs with their table-level names.
   case "$SEED" in 789|1024)
       TEST_JSON="seed_extension_results/test/${RUN}.json"
       BOUNDARY_DIR="seed_extension_results/boundary/${RUN}" ;;
     *)
       case "$STAGE" in
-        raw)       BASE_NAME="$RUN" ;;
-        corrected) BASE_NAME="$RUN" ;;
-        pretrain)  BASE_NAME="$RUN" ;;
-        adjusted)  BASE_NAME="original_seed${SEED}" ;;
-        roi)       BASE_NAME="roi_refiner_seed${SEED}" ;;
-      esac
-      case "$STAGE" in
-        raw)       TEST_DIR=raw_test_results;    BOUNDARY_ROOT=raw_boundary_results ;;
-        corrected) TEST_DIR=factor_test_results; BOUNDARY_ROOT=factor_boundary_results ;;
-        pretrain)  TEST_DIR=factor_test_results; BOUNDARY_ROOT=factor_boundary_results ;;
-        adjusted)  TEST_DIR=final_test_results;  BOUNDARY_ROOT=final_boundary_results ;;
-        roi)       TEST_DIR=final_test_results;  BOUNDARY_ROOT=final_boundary_results ;;
+        raw)       BASE_NAME="$RUN"; TEST_DIR=raw_test_results;    BOUNDARY_ROOT=raw_boundary_results ;;
+        corrected) BASE_NAME="$RUN"; TEST_DIR=factor_test_results; BOUNDARY_ROOT=factor_boundary_results ;;
+        pretrain)  BASE_NAME="$RUN"; TEST_DIR=factor_test_results; BOUNDARY_ROOT=factor_boundary_results ;;
+        adjusted)  BASE_NAME="original_seed${SEED}";    TEST_DIR=final_test_results;  BOUNDARY_ROOT=final_boundary_results ;;
+        roi)       BASE_NAME="roi_refiner_seed${SEED}"; TEST_DIR=final_test_results;  BOUNDARY_ROOT=final_boundary_results ;;
       esac
       TEST_JSON="${TEST_DIR}/${BASE_NAME}.json"
       BOUNDARY_DIR="${BOUNDARY_ROOT}/${BASE_NAME}" ;;
@@ -115,13 +110,13 @@ for SEED in "${SEEDS[@]}"; do
   "${TRAIN[@]}"
   test -f "$CHECKPOINT" || { echo "missing checkpoint: $CHECKPOINT" >&2; exit 4; }
 
-  "$PYTHON_BIN" evaluate_fetalheart_final_models.py \
+  "$PYTHON_BIN" evaluate.py \
     --root_path "$DATA_ROOT" --list_dir "$LIST_DIR" \
     --checkpoint "$CHECKPOINT" --output "$TEST_JSON" \
     --model_type "$MODEL_TYPE" --split test --img_size "$IMG" \
     --num_classes 12 --vit_name R50-ViT-B_16 --vit_patches_size 16 --n_skip 3
 
-  "$PYTHON_BIN" eval_boundary_search.py \
+  "$PYTHON_BIN" evaluate_boundary.py \
     --checkpoint "$CHECKPOINT" --output_dir "$BOUNDARY_DIR" --run_name "$RUN" \
     --data_dir "$DATA_ROOT" --list_dir "$LIST_DIR" --split test \
     --num_classes 12 --img_size "$IMG" --vit_name R50-ViT-B_16 \

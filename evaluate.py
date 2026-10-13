@@ -1,10 +1,10 @@
-"""Final test evaluator for original TransUNet and Soft ROI Refiner."""
+"""Test evaluator: Dice/IoU/Recall/Precision for any trained checkpoint."""
 from __future__ import annotations
 import argparse, json, os
 import torch
 from torch.utils.data import DataLoader
 from datasets.dataset_fetalheart import FetalHeartNPZDataset
-from trainer_fetalheart import evaluate_present_case_class
+from trainers import evaluate_present_case_class
 
 def main():
     p=argparse.ArgumentParser()

@@ -86,7 +86,7 @@ Copy `configs/paths.example.sh` to `configs/paths.sh` and set `DATA_ROOT` / `LIS
 
 ```bash
 bash scripts/00_download_pretrained.sh            # ImageNet-21k R50+ViT-B/16 weights
-bash scripts/04_run_tests.sh                      # unit / smoke tests (CPU ok)
+bash scripts/04_run_tests.sh                      # unit / smoke checks (CPU ok)
 
 # main progression, five seeds each:
 bash scripts/01_train_progression.sh raw          # official TransUNet recipe
@@ -102,13 +102,20 @@ bash scripts/03_summarize.sh                      # aggregate paper tables
 Optional arguments: `01_train_progression.sh <stage> 42 123` trains specific seeds;
 `02_train_baselines.sh unet` trains a single architecture.
 
-Additional utilities:
+All training goes through one entry point, `train.py --model {transunet, roi_refiner,
+unet, attunet, unetpp, swinunet}`, so every stage shares the same protocol:
 
-- `evaluate_fetalheart_final_models.py` — Dice/IoU/Recall/Precision for one checkpoint.
-- `eval_boundary_search.py` — Boundary Dice, HD95, ASSD, detection rate, per-case CSVs and label maps.
-- `dump_test_confusion.py` — pixel-level confusion matrices.
-- `make_final_qualitative_figure.py` — qualitative comparison panels for the four target structures.
-- `prepare_fetalheart_view_metadata.py` — case-to-view metadata from the fixed split.
+```bash
+python train.py --model roi_refiner --root_path $DATA_ROOT --list_dir $LIST_DIR \
+  --snapshot_path runs/roi_seed42 --pretrained_path $PRETRAINED \
+  --img_size 384 --max_epochs 70 --batch_size 4 --amp
+```
+
+Evaluation utilities:
+
+- `evaluate.py` — Dice/IoU/Recall/Precision for one checkpoint.
+- `evaluate_boundary.py` — Boundary Dice, HD95, ASSD, detection rate, per-case CSVs and label maps.
+- `summarize.py [main|baselines|final3|all]` — aggregate the frozen results into the paper tables.
 
 Default training configuration (Adjusted TransUNet): 384×384 input, batch 4, 70 epochs,
 SGD lr 0.01 with polynomial decay (power 0.9), 0.2 CE + 0.8 corrected foreground Dice,
@@ -120,11 +127,11 @@ AMP and deterministic mode enabled.
 ```text
 ├── networks/            TransUNet encoder/decoder, Soft ROI Refiner, CNN baselines
 ├── datasets/            NPZ dataset and augmentation for the fixed D10 split
-├── losses_fetalheart.py composite losses incl. corrected foreground Dice
-├── trainer_fetalheart*.py  shared training loop and ROI-Refiner trainer
-├── train_fetalheart_*.py   training entry points (raw / factorial / opt / baselines / roi)
-├── evaluate_*.py, eval_boundary_search.py, summarize_*.py   evaluation and aggregation
-├── tests/               unit and smoke tests
+├── losses.py            composite losses incl. corrected foreground Dice
+├── trainers.py          shared training loops + present-case-class evaluation
+├── train.py             unified training entry for all models
+├── evaluate.py / evaluate_boundary.py / summarize.py   evaluation and aggregation
+├── tests/run_checks.py  losses/protocol, ROI-mapping and architecture checks
 ├── scripts/             portable reproduction entry points (00–04)
 ├── configs/             path configuration template
 └── assets/              method figure

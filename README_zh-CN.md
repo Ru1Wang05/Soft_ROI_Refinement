@@ -44,6 +44,10 @@ bash scripts/02_train_baselines.sh             # U-Net 系列基线
 bash scripts/03_summarize.sh                   # 汇总论文表格
 ```
 
+所有训练共用一个入口 `train.py --model {transunet, roi_refiner, unet, attunet,
+unetpp, swinunet}`；评估用 `evaluate.py`（区域指标）、`evaluate_boundary.py`
+（边界指标）、`summarize.py`（汇总表格），保证各阶段协议完全一致。
+
 数据格式：`$DATA_ROOT/<case>.npz`（键：`image`、`label`）+ `$LIST_DIR/train|val|test.txt`
 （固定划分，不得重新划分）。D10 数据集不随仓库分发。
 
