@@ -41,7 +41,7 @@ ImageNet-21K 初始化 → 调优后的 Adjusted TransUNet → **+ Soft ROI Refi
 ## 方法
 
 <p align="center">
-  <img src="assets/method_overview.png" width="720">
+  <img src="assets/method_overview.png" width="100%">
 </p>
 
 - **软定位**：分支用 decoder 特征、投影图像和粗概率为每个弱结构预测 sigmoid

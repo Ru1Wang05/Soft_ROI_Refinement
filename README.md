@@ -50,7 +50,7 @@ matched protocol with five fixed training seeds (42, 123, 456, 789, 1024).
 ## Method
 
 <p align="center">
-  <img src="assets/method_overview.png" width="720">
+  <img src="assets/method_overview.png" width="100%">
 </p>
 
 - **Soft localization.** The branch combines decoder features, a projected input
